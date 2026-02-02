@@ -3,7 +3,7 @@
 
 set -e
 
-CONFIG_FILE="$HOME/.config/ghostty/config"
+CONFIG_FILE="$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 CACHE_FILE="$HOME/.cache/ghostty-theme-watcher/current-theme"
 
 # Ensure cache directory exists
@@ -47,28 +47,14 @@ update_config() {
     fi
 }
 
-# Trigger Ghostty reload using Cmd+Shift+, keystroke via helper app
-reload_ghostty() {
-    # Use the helper app if it exists, otherwise try osascript directly
-    if [ -x "$HOME/Applications/Ghostty Reload Helper.app/Contents/MacOS/ghostty-reload-helper" ]; then
-        "$HOME/Applications/Ghostty Reload Helper.app/Contents/MacOS/ghostty-reload-helper" 2>/dev/null || true
-    else
-        osascript -e 'tell application "System Events"
-            tell process "ghostty"
-                keystroke "," using {command down, shift down}
-            end tell
-        end tell' 2>/dev/null || true
-    fi
-}
-
 # Main loop
 echo "Starting Ghostty theme watcher..."
+echo "Config will be updated automatically. Restart Ghostty (Cmd+Q, reopen) to apply changes."
 
 # Initial update
 current_appearance=$(get_appearance)
 echo "$current_appearance" > "$CACHE_FILE"
 update_config "$current_appearance"
-reload_ghostty
 echo "Initial theme: $current_appearance"
 
 # Watch for changes
@@ -83,8 +69,7 @@ while true; do
         echo "$current_appearance" > "$CACHE_FILE"
 
         update_config "$current_appearance"
-        reload_ghostty
 
-        echo "Updated config and reloaded Ghostty"
+        echo "Config updated! Restart Ghostty to apply new split colors."
     fi
 done
