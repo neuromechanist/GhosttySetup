@@ -47,13 +47,18 @@ update_config() {
     fi
 }
 
-# Trigger Ghostty reload using Cmd+Shift+, keystroke
+# Trigger Ghostty reload using Cmd+Shift+, keystroke via helper app
 reload_ghostty() {
-    osascript -e 'tell application "System Events"
-        tell process "ghostty"
-            keystroke "," using {command down, shift down}
-        end tell
-    end tell' 2>/dev/null || true
+    # Use the helper app if it exists, otherwise try osascript directly
+    if [ -x "$HOME/Applications/Ghostty Reload Helper.app/Contents/MacOS/ghostty-reload-helper" ]; then
+        "$HOME/Applications/Ghostty Reload Helper.app/Contents/MacOS/ghostty-reload-helper" 2>/dev/null || true
+    else
+        osascript -e 'tell application "System Events"
+            tell process "ghostty"
+                keystroke "," using {command down, shift down}
+            end tell
+        end tell' 2>/dev/null || true
+    fi
 }
 
 # Main loop

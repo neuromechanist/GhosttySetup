@@ -27,6 +27,11 @@ chmod +x "$BIN_DIR/ghostty-theme-watcher"
 xattr -c "$BIN_DIR/ghostty-theme-watcher" 2>/dev/null || true
 echo "  ✓ Theme watcher installed to $BIN_DIR/ghostty-theme-watcher"
 
+# Create reload helper app
+echo "Creating Ghostty Reload Helper app..."
+bash "$SCRIPT_DIR/bin/create-reload-app.sh" >/dev/null 2>&1 || true
+echo "  ✓ Reload helper app created at ~/Applications/Ghostty Reload Helper.app"
+
 # Install LaunchAgent
 echo "Installing theme watcher LaunchAgent..."
 mkdir -p "$LAUNCHAGENTS_DIR"
@@ -76,10 +81,20 @@ mkdir -p "$HOME/.cache/ghostty-theme-watcher"
 echo ""
 echo "Installation complete!"
 echo ""
+echo "IMPORTANT: Grant Accessibility permissions for automatic config reload:"
+echo "  1. Open System Settings > Privacy & Security > Accessibility"
+echo "  2. Click the lock icon to make changes"
+echo "  3. Click the + button"
+echo "  4. Press Cmd+Shift+G and paste: $HOME/Applications/Ghostty Reload Helper.app"
+echo "  5. Select the app and click 'Open'"
+echo ""
+echo "Without Accessibility permissions, you'll need to manually reload Ghostty"
+echo "with Cmd+Shift+, after switching between light/dark mode."
+echo ""
 echo "The theme watcher is now running and will:"
 echo "  • Detect system appearance changes (dark/light mode)"
 echo "  • Update split-divider-color and unfocused-split-fill automatically"
-echo "  • Reload Ghostty configuration via Cmd+Shift+,"
+echo "  • Reload Ghostty configuration via Cmd+Shift+, (requires Accessibility permission)"
 echo ""
 echo "Logs are available at:"
 echo "  /tmp/ghostty-theme-watcher.log"

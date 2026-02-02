@@ -22,7 +22,19 @@ cd GhosttySetup
 
 This installs:
 - Ghostty configuration to `~/.config/ghostty/config`
+- Theme watcher script to `~/.local/bin/ghostty-theme-watcher`
 - Theme watcher as a LaunchAgent (runs automatically on login)
+
+### Accessibility Permissions
+
+For the theme watcher to automatically reload Ghostty's configuration, it needs Accessibility permissions:
+
+1. Open **System Settings** > **Privacy & Security** > **Accessibility**
+2. Click the lock icon and authenticate
+3. Add **Terminal** (or your terminal app) to the list of allowed apps
+4. Alternatively, you can manually reload Ghostty with Cmd+Shift+, when switching themes
+
+Without Accessibility permissions, the theme watcher will still update the config file, but you'll need to manually reload Ghostty after switching between light/dark mode.
 
 ## How It Works
 
@@ -105,6 +117,7 @@ If you're coming from WezSetup (WezTerm), the key bindings are compatible. Major
 - macOS (uses `defaults read -g AppleInterfaceStyle` for appearance detection)
 - Ghostty 1.1.0 or later
 - JetBrains Mono font (or customize in config)
+- Accessibility permissions for automatic config reload (optional, can reload manually)
 
 ## License
 
