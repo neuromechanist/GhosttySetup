@@ -6,6 +6,7 @@ set -e
 CONFIG_DIR="$HOME/.config/ghostty"
 LAUNCHAGENTS_DIR="$HOME/Library/LaunchAgents"
 CACHE_DIR="$HOME/.cache/ghostty-theme-watcher"
+BIN_DIR="$HOME/.local/bin"
 
 echo "Uninstalling GhosttySetup..."
 
@@ -15,6 +16,13 @@ if [ -f "$LAUNCHAGENTS_DIR/com.ghostty.theme-watcher.plist" ]; then
     launchctl unload "$LAUNCHAGENTS_DIR/com.ghostty.theme-watcher.plist" 2>/dev/null || true
     rm "$LAUNCHAGENTS_DIR/com.ghostty.theme-watcher.plist"
     echo "  ✓ LaunchAgent removed"
+fi
+
+# Remove theme watcher script
+if [ -f "$BIN_DIR/ghostty-theme-watcher" ]; then
+    echo "Removing theme watcher script..."
+    rm "$BIN_DIR/ghostty-theme-watcher"
+    echo "  ✓ Theme watcher script removed"
 fi
 
 # Remove config file
