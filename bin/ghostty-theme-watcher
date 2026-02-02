@@ -1,0 +1,85 @@
+#!/bin/bash
+# Theme watcher for Ghostty - updates split divider colors based on system appearance
+
+set -e
+
+CONFIG_FILE="$HOME/.config/ghostty/config"
+CACHE_FILE="$HOME/.cache/ghostty-theme-watcher/current-theme"
+
+# Ensure cache directory exists
+mkdir -p "$(dirname "$CACHE_FILE")"
+
+# Detect current macOS appearance
+get_appearance() {
+    if defaults read -g AppleInterfaceStyle &>/dev/null; then
+        echo "dark"
+    else
+        echo "light"
+    fi
+}
+
+# Update config file with theme-aware colors
+update_config() {
+    local appearance=$1
+    local divider_color
+    local fill_color
+
+    if [ "$appearance" = "dark" ]; then
+        divider_color="#f0f0f0"  # White for dark mode
+        fill_color="#f0f0f0"
+    else
+        divider_color="#0f0f0f"  # Black for light mode
+        fill_color="#0f0f0f"
+    fi
+
+    # Update split-divider-color
+    if grep -q "^split-divider-color" "$CONFIG_FILE"; then
+        sed -i '' "s|^split-divider-color.*|split-divider-color = $divider_color|" "$CONFIG_FILE"
+    else
+        echo "split-divider-color = $divider_color" >> "$CONFIG_FILE"
+    fi
+
+    # Update unfocused-split-fill
+    if grep -q "^unfocused-split-fill" "$CONFIG_FILE"; then
+        sed -i '' "s|^unfocused-split-fill.*|unfocused-split-fill = $fill_color|" "$CONFIG_FILE"
+    else
+        echo "unfocused-split-fill = $fill_color" >> "$CONFIG_FILE"
+    fi
+}
+
+# Trigger Ghostty reload using Cmd+Shift+, keystroke
+reload_ghostty() {
+    osascript -e 'tell application "System Events"
+        tell process "ghostty"
+            keystroke "," using {command down, shift down}
+        end tell
+    end tell' 2>/dev/null || true
+}
+
+# Main loop
+echo "Starting Ghostty theme watcher..."
+
+# Initial update
+current_appearance=$(get_appearance)
+echo "$current_appearance" > "$CACHE_FILE"
+update_config "$current_appearance"
+reload_ghostty
+echo "Initial theme: $current_appearance"
+
+# Watch for changes
+while true; do
+    sleep 2
+
+    new_appearance=$(get_appearance)
+
+    if [ "$new_appearance" != "$current_appearance" ]; then
+        echo "Appearance changed: $current_appearance -> $new_appearance"
+        current_appearance=$new_appearance
+        echo "$current_appearance" > "$CACHE_FILE"
+
+        update_config "$current_appearance"
+        reload_ghostty
+
+        echo "Updated config and reloaded Ghostty"
+    fi
+done
