@@ -21,27 +21,22 @@ cd GhosttySetup
 ```
 
 This installs:
-- Ghostty configuration to `~/.config/ghostty/config`
 - Theme watcher script to `~/.local/bin/ghostty-theme-watcher`
 - Theme watcher as a LaunchAgent (runs automatically on login)
 
-### Accessibility Permissions
-
-For the theme watcher to automatically reload Ghostty's configuration, it needs Accessibility permissions:
-
-1. Open **System Settings** > **Privacy & Security** > **Accessibility**
-2. Click the lock icon and authenticate
-3. Add **Terminal** (or your terminal app) to the list of allowed apps
-4. Alternatively, you can manually reload Ghostty with Cmd+Shift+, when switching themes
-
-Without Accessibility permissions, the theme watcher will still update the config file, but you'll need to manually reload Ghostty after switching between light/dark mode.
+**Note:** Does not modify your existing Ghostty config. The watcher updates split colors in your config at:
+```
+~/Library/Application Support/com.mitchellh.ghostty/config
+```
 
 ## How It Works
 
 The theme watcher runs in the background and:
 1. Monitors macOS system appearance (dark/light mode)
-2. Updates `split-divider-color` and `unfocused-split-fill` in the config file
-3. Triggers Ghostty's built-in reload (Cmd+Shift+,) to apply changes immediately
+2. Automatically updates `split-divider-color` and `unfocused-split-fill` in your config
+3. You manually restart Ghostty (Cmd+Q, reopen) when you want to apply the new colors
+
+**Why manual restart?** Ghostty's config reload (Cmd+Shift+,) doesn't update split colors - only a full restart applies them.
 
 ### Theme-Aware Colors
 
