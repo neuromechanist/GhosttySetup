@@ -1,7 +1,11 @@
-# GhosttySetup: Minimal theme-aware split dividers
-# Only adds automatic theme-aware split colors
+# GhosttySetup: Theme-aware appearance settings
+# Split and cursor colors are dynamically updated by the theme watcher
 
 # Split appearance (dynamically updated by theme watcher)
 split-divider-color = #0f0f0f
 unfocused-split-fill = #0f0f0f
 unfocused-split-opacity = 0.99
+
+# Cursor appearance (dynamically updated by theme watcher)
+cursor-color = #0f0f0f
+cursor-text = #f0f0f0

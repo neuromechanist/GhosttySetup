@@ -1,5 +1,5 @@
 #!/bin/bash
-# Theme watcher for Ghostty - updates split divider colors based on system appearance
+# Theme watcher for Ghostty - updates cursor and split colors based on system appearance
 
 set -e
 
@@ -23,13 +23,33 @@ update_config() {
     local appearance=$1
     local divider_color
     local fill_color
+    local cursor_color
+    local cursor_text_color
 
     if [ "$appearance" = "dark" ]; then
-        divider_color="#f0f0f0"  # White for dark mode
+        divider_color="#f0f0f0"      # White for dark mode
         fill_color="#f0f0f0"
+        cursor_color="#f0f0f0"       # Light cursor on dark background
+        cursor_text_color="#0f0f0f"  # Dark text under cursor
     else
-        divider_color="#0f0f0f"  # Black for light mode
+        divider_color="#0f0f0f"      # Black for light mode
         fill_color="#0f0f0f"
+        cursor_color="#0f0f0f"       # Dark cursor on light background
+        cursor_text_color="#f0f0f0"  # Light text under cursor
+    fi
+
+    # Update cursor-color
+    if grep -q "^cursor-color" "$CONFIG_FILE"; then
+        sed -i '' "s|^cursor-color.*|cursor-color = $cursor_color|" "$CONFIG_FILE"
+    else
+        echo "cursor-color = $cursor_color" >> "$CONFIG_FILE"
+    fi
+
+    # Update cursor-text
+    if grep -q "^cursor-text" "$CONFIG_FILE"; then
+        sed -i '' "s|^cursor-text.*|cursor-text = $cursor_text_color|" "$CONFIG_FILE"
+    else
+        echo "cursor-text = $cursor_text_color" >> "$CONFIG_FILE"
     fi
 
     # Update split-divider-color
@@ -70,6 +90,6 @@ while true; do
 
         update_config "$current_appearance"
 
-        echo "Config updated! Restart Ghostty to apply new split colors."
+        echo "Config updated! Restart Ghostty to apply changes."
     fi
 done
