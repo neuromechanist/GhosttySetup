@@ -29,7 +29,14 @@ fi
 if [ -f "$CONFIG_DIR/config" ]; then
     echo "Removing Ghostty config..."
     rm "$CONFIG_DIR/config"
-    echo "  ✓ Config removed"
+    echo "  Config removed"
+fi
+
+# Remove shell appearance helper
+if [ -f "$CONFIG_DIR/appearance.zsh" ]; then
+    echo "Removing shell appearance helper..."
+    rm "$CONFIG_DIR/appearance.zsh"
+    echo "  Shell appearance helper removed"
 fi
 
 # Remove cache directory
