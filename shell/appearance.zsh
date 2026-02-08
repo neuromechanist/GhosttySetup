@@ -2,10 +2,9 @@
 # Detects system dark/light mode and sets fast-syntax-highlighting theme
 # and LS_COLORS accordingly.
 #
-# Ghostty's color schemes (GitHub Dark / GitHub Light via theme switching)
-# define ANSI color palettes with readable colors on their respective
-# backgrounds. FSH's default theme uses ANSI color names, so it
-# automatically adapts to whichever scheme is active.
+# Ghostty's color schemes define ANSI color palettes with readable colors
+# on their respective backgrounds. FSH's default theme uses ANSI color
+# names, so it automatically adapts to whichever scheme is active.
 #
 # Source this file in your ~/.zshrc AFTER loading fast-syntax-highlighting:
 #   source ~/.config/ghostty/appearance.zsh
@@ -32,17 +31,15 @@ ghosttysetup_update_colors() {
   fi
 
   # macOS ls uses LSCOLORS (BSD format)
-  # Linux ls uses LS_COLORS (GNU format)
+  # Linux ls uses LS_COLORS (GNU format via gdircolors)
   if [[ "$appearance" == "light" ]]; then
     export LSCOLORS="ExGxDxDxCxDxDxBxBxExEx"
-    if (( $+commands[gdircolors] )); then
-      eval "$(gdircolors -b)"
-    fi
   else
     export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
-    if (( $+commands[gdircolors] )); then
-      eval "$(gdircolors -b)"
-    fi
+  fi
+
+  if (( $+commands[gdircolors] )); then
+    eval "$(gdircolors -b)"
   fi
 
   # Clean up any git color env overrides from previous versions

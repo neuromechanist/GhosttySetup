@@ -17,12 +17,12 @@ mkdir -p "$BIN_DIR"
 # Copy config file
 echo "Installing Ghostty config..."
 cp "$SCRIPT_DIR/config/config" "$CONFIG_DIR/config"
-echo "  Config installed to $CONFIG_DIR/config"
+echo "  Ghostty config installed to $CONFIG_DIR/config"
 
 # Install shell appearance helper
 echo "Installing shell appearance helper..."
 cp "$SCRIPT_DIR/shell/appearance.zsh" "$CONFIG_DIR/appearance.zsh"
-echo "  Shell appearance helper installed to $CONFIG_DIR/appearance.zsh"
+echo "  Appearance helper installed to $CONFIG_DIR/appearance.zsh"
 
 # Copy theme watcher script
 echo "Installing theme watcher script..."
@@ -30,12 +30,17 @@ cp "$SCRIPT_DIR/bin/ghostty-theme-watcher" "$BIN_DIR/ghostty-theme-watcher"
 chmod +x "$BIN_DIR/ghostty-theme-watcher"
 # Clear extended attributes to avoid permission issues
 xattr -c "$BIN_DIR/ghostty-theme-watcher" 2>/dev/null || true
-echo "  ✓ Theme watcher installed to $BIN_DIR/ghostty-theme-watcher"
+echo "  Theme watcher installed to $BIN_DIR/ghostty-theme-watcher"
 
-# Create reload helper app
-echo "Creating Ghostty Reload Helper app..."
-bash "$SCRIPT_DIR/bin/create-reload-app.sh" >/dev/null 2>&1 || true
-echo "  ✓ Reload helper app created at ~/Applications/Ghostty Reload Helper.app"
+# Create reload helper app (optional, requires create-reload-app.sh)
+if [ -f "$SCRIPT_DIR/bin/create-reload-app.sh" ]; then
+    echo "Creating Ghostty Reload Helper app..."
+    if bash "$SCRIPT_DIR/bin/create-reload-app.sh" 2>/dev/null; then
+        echo "  Reload helper app created at ~/Applications/Ghostty Reload Helper.app"
+    else
+        echo "  Skipped reload helper app (create-reload-app.sh failed)"
+    fi
+fi
 
 # Install LaunchAgent
 echo "Installing theme watcher LaunchAgent..."
@@ -67,7 +72,7 @@ cat > "$LAUNCHAGENTS_DIR/com.ghostty.theme-watcher.plist" <<EOF
 </dict>
 </plist>
 EOF
-echo "  ✓ LaunchAgent installed to $LAUNCHAGENTS_DIR/com.ghostty.theme-watcher.plist"
+echo "  LaunchAgent installed to $LAUNCHAGENTS_DIR/com.ghostty.theme-watcher.plist"
 
 # Unload existing LaunchAgent if running
 if launchctl list | grep -q com.ghostty.theme-watcher; then
@@ -78,7 +83,7 @@ fi
 # Load LaunchAgent
 echo "Starting theme watcher..."
 launchctl load -w "$LAUNCHAGENTS_DIR/com.ghostty.theme-watcher.plist"
-echo "  ✓ Theme watcher started"
+echo "  Theme watcher started"
 
 # Create cache directory
 mkdir -p "$HOME/.cache/ghostty-theme-watcher"

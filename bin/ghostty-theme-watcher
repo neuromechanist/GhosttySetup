@@ -18,53 +18,39 @@ get_appearance() {
     fi
 }
 
+# Set a single config value, appending if not present
+set_config_value() {
+    local key=$1
+    local value=$2
+    if grep -q "^${key} = " "$CONFIG_FILE"; then
+        sed -i '' "s|^${key} = .*|${key} = ${value}|" "$CONFIG_FILE"
+    else
+        echo "${key} = ${value}" >> "$CONFIG_FILE"
+    fi
+}
+
 # Update config file with theme-aware colors
 update_config() {
     local appearance=$1
-    local divider_color
-    local fill_color
-    local cursor_color
-    local cursor_text_color
+    local fg_color bg_color
 
     if [ "$appearance" = "dark" ]; then
-        divider_color="#f0f0f0"      # White for dark mode
-        fill_color="#f0f0f0"
-        cursor_color="#f0f0f0"       # Light cursor on dark background
-        cursor_text_color="#0f0f0f"  # Dark text under cursor
+        fg_color="#f0f0f0"  # Light foreground on dark background
+        bg_color="#0f0f0f"
     else
-        divider_color="#0f0f0f"      # Black for light mode
-        fill_color="#0f0f0f"
-        cursor_color="#0f0f0f"       # Dark cursor on light background
-        cursor_text_color="#f0f0f0"  # Light text under cursor
+        fg_color="#0f0f0f"  # Dark foreground on light background
+        bg_color="#f0f0f0"
     fi
 
-    # Update cursor-color
-    if grep -q "^cursor-color" "$CONFIG_FILE"; then
-        sed -i '' "s|^cursor-color.*|cursor-color = $cursor_color|" "$CONFIG_FILE"
-    else
-        echo "cursor-color = $cursor_color" >> "$CONFIG_FILE"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "Config file not found: $CONFIG_FILE"
+        return 1
     fi
 
-    # Update cursor-text
-    if grep -q "^cursor-text" "$CONFIG_FILE"; then
-        sed -i '' "s|^cursor-text.*|cursor-text = $cursor_text_color|" "$CONFIG_FILE"
-    else
-        echo "cursor-text = $cursor_text_color" >> "$CONFIG_FILE"
-    fi
-
-    # Update split-divider-color
-    if grep -q "^split-divider-color" "$CONFIG_FILE"; then
-        sed -i '' "s|^split-divider-color.*|split-divider-color = $divider_color|" "$CONFIG_FILE"
-    else
-        echo "split-divider-color = $divider_color" >> "$CONFIG_FILE"
-    fi
-
-    # Update unfocused-split-fill
-    if grep -q "^unfocused-split-fill" "$CONFIG_FILE"; then
-        sed -i '' "s|^unfocused-split-fill.*|unfocused-split-fill = $fill_color|" "$CONFIG_FILE"
-    else
-        echo "unfocused-split-fill = $fill_color" >> "$CONFIG_FILE"
-    fi
+    set_config_value "cursor-color" "$fg_color"
+    set_config_value "cursor-text" "$bg_color"
+    set_config_value "split-divider-color" "$fg_color"
+    set_config_value "unfocused-split-fill" "$fg_color"
 }
 
 # Main loop

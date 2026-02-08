@@ -51,7 +51,6 @@ The theme watcher runs in the background and:
 The main config file (`~/.config/ghostty/config`) includes:
 
 **Theme Management:**
-- Built-in theme switching: `theme = dark:GhosttyDark,light:GhosttyLight`
 - Dynamic cursor and split colors updated by theme watcher
 
 **Cursor Appearance:**
@@ -105,13 +104,13 @@ tail -f /tmp/ghostty-theme-watcher.error.log
 ./uninstall.sh
 ```
 
-Removes config files, LaunchAgent, and cache directory.
+Removes config files, shell appearance helper, LaunchAgent, and cache directory.
 
 ## Why Not Ghostty's Built-in Theme Switching?
 
-Ghostty 1.1.0 supports built-in theme switching with `theme = dark:X,light:Y`, which handles color schemes automatically. However, `split-divider-color` and `unfocused-split-fill` are static config values that don't respond to theme changes.
+Ghostty 1.1.0 supports built-in theme switching with `theme = dark:X,light:Y`, which handles color schemes automatically. However, `cursor-color`, `cursor-text`, `split-divider-color`, and `unfocused-split-fill` are static config values that don't respond to theme changes.
 
-This project adds a background watcher to make these split appearance settings theme-aware, matching the rest of Ghostty's theme switching behavior.
+This project adds a background watcher to make these appearance settings theme-aware, matching the rest of Ghostty's theme switching behavior.
 
 ## Migrating from WezTerm
 
