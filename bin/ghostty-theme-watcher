@@ -1,5 +1,5 @@
 #!/bin/bash
-# Theme watcher for Ghostty - updates split divider colors based on system appearance
+# Theme watcher for Ghostty - updates cursor and split colors based on system appearance
 
 set -e
 
@@ -18,33 +18,39 @@ get_appearance() {
     fi
 }
 
+# Set a single config value, appending if not present
+set_config_value() {
+    local key=$1
+    local value=$2
+    if grep -q "^${key} = " "$CONFIG_FILE"; then
+        sed -i '' "s|^${key} = .*|${key} = ${value}|" "$CONFIG_FILE"
+    else
+        echo "${key} = ${value}" >> "$CONFIG_FILE"
+    fi
+}
+
 # Update config file with theme-aware colors
 update_config() {
     local appearance=$1
-    local divider_color
-    local fill_color
+    local fg_color bg_color
 
     if [ "$appearance" = "dark" ]; then
-        divider_color="#f0f0f0"  # White for dark mode
-        fill_color="#f0f0f0"
+        fg_color="#f0f0f0"  # Light foreground on dark background
+        bg_color="#0f0f0f"
     else
-        divider_color="#0f0f0f"  # Black for light mode
-        fill_color="#0f0f0f"
+        fg_color="#0f0f0f"  # Dark foreground on light background
+        bg_color="#f0f0f0"
     fi
 
-    # Update split-divider-color
-    if grep -q "^split-divider-color" "$CONFIG_FILE"; then
-        sed -i '' "s|^split-divider-color.*|split-divider-color = $divider_color|" "$CONFIG_FILE"
-    else
-        echo "split-divider-color = $divider_color" >> "$CONFIG_FILE"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "Config file not found: $CONFIG_FILE"
+        return 1
     fi
 
-    # Update unfocused-split-fill
-    if grep -q "^unfocused-split-fill" "$CONFIG_FILE"; then
-        sed -i '' "s|^unfocused-split-fill.*|unfocused-split-fill = $fill_color|" "$CONFIG_FILE"
-    else
-        echo "unfocused-split-fill = $fill_color" >> "$CONFIG_FILE"
-    fi
+    set_config_value "cursor-color" "$fg_color"
+    set_config_value "cursor-text" "$bg_color"
+    set_config_value "split-divider-color" "$fg_color"
+    set_config_value "unfocused-split-fill" "$fg_color"
 }
 
 # Main loop
@@ -70,6 +76,6 @@ while true; do
 
         update_config "$current_appearance"
 
-        echo "Config updated! Restart Ghostty to apply new split colors."
+        echo "Config updated! Restart Ghostty to apply changes."
     fi
 done
