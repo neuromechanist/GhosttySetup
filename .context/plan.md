@@ -16,14 +16,25 @@
 - [x] README documenting install, theme keys, and watcher control
 - [x] Adopt AGENTS.md / CLAUDE.md / .rules / .context conventions in this repo
 
-### Near-term
-- [ ] Add a `shellcheck` GitHub Actions workflow for `*.sh` and the watcher script
-- [ ] Back up the user's existing `~/.config/ghostty/config` before `install.sh` overwrites it
-- [ ] Document the Reload Helper Accessibility setup with a screenshot or short script-driven verification
-- [ ] Decide whether to upgrade `set -e` to `set -euo pipefail` across all scripts (see `.context/ideas.md`)
+### In progress (issue #2 / feature/issue-2-cursor-paste-and-linux)
+- [x] Backup existing config before overwrite
+- [x] `set -euo pipefail` in install.sh, uninstall.sh, watcher
+- [x] Linux/GNOME support (`gsettings`, systemd user unit)
+- [x] Cursor UX via `cell-foreground` / `cell-background` (drops watcher cursor handling)
+- [x] Prominent typing indicator via `cursor-style = block` + `cursor-style-blink = true` + `shell-integration-features = no-cursor`
+- [x] `clipboard-paste-protection = false`
+- [x] Bash appearance helper
+- [x] Fix macOS path mismatch (installer + watcher now share `Application Support/.../config.ghostty`)
+- [ ] Manual verification on this Mac (light↔dark toggle, watcher logs)
+- [ ] PR open, `/review-pr` clean
+
+### Near-term (after this PR)
+- [ ] `shellcheck` GitHub Actions workflow for `*.sh` and the watcher
+- [ ] Document the Reload Helper Accessibility setup with a screenshot
 
 ### Stretch / ideas
-- [ ] Linux support (would require replacing `defaults` + `launchctl` with a desktop-environment probe and systemd user unit)
+- [ ] KDE / Hyprland / Sway appearance detection
+- [ ] First-class fish shell helper
 - [ ] Configurable theme-aware key list (today hardcoded in the watcher)
 - [ ] Self-update path for the installed watcher script when the repo changes
 

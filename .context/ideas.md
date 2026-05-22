@@ -24,6 +24,11 @@ Values are intentionally near-pure black/white rather than exact black/white to 
 `shell/appearance.zsh` resets fast-syntax-highlighting to its default theme (which uses ANSI color names that adapt to Ghostty's active palette) and sets a matching `LS_COLORS` / `LSCOLORS`. It is loaded either via zinit (`zinit light neuromechanist/GhosttySetup`) or sourced manually from `~/.zshrc`.
 
 ## Outstanding questions
-- Should `install.sh` back up an existing `~/.config/ghostty/config` before overwriting? Today it copies unconditionally. The repo template is intentionally minimal so a backup-and-merge flow would be friendlier.
-- Should we upgrade `set -e` to `set -euo pipefail` across the shell scripts? Pros: safer; Cons: a couple of conditional `launchctl` and `xattr` calls already swallow failures intentionally and would need explicit `|| true`.
+- ~Should `install.sh` back up an existing `~/.config/ghostty/config` before overwriting?~ Yes; done in issue #2.
+- ~Should we upgrade `set -e` to `set -euo pipefail`?~ Yes; done in issue #2 for all maintained scripts.
 - Is there value in turning the watcher into a Swift app that listens for `NSApplication.appearanceDidChangeNotification` instead of polling? Polling is cheap and simpler to ship, but an event-driven version would feel more native.
+- Is `gsettings` enough for Linux, or should we also probe `kreadconfig5` (KDE) and `hyprctl` (Hyprland)? Deferred until someone files an issue.
+- Should the bash helper bother with `dircolors`? It works on Linux (GNU coreutils) and on macOS only if the user installed coreutils (`gdircolors`). The helper checks for both.
+
+## Why cursor is now static config, not watcher-managed
+`cell-foreground` / `cell-background` were added in Ghostty 1.2.0 specifically to make the cursor self-contrasting. They subsume the deprecated `cursor-invert-fg-bg` and our previous "rewrite cursor-color on theme change" loop. The watcher now only manages keys Ghostty cannot derive at draw time — `split-divider-color` and `unfocused-split-fill`.
