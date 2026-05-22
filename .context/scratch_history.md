@@ -26,9 +26,9 @@ Brought AGENTS.md / CLAUDE.md / .rules / .context conventions into this repo wel
 - Where the fix lives: config/config.
 
 ### 2026-05-22 — Claude Code question text invisible on GitHub light theme
-- What was tried: shipped `theme = dark:GitHub Dark,light:GitHub` with default contrast settings.
+- What was tried: shipped `theme = dark:GitHub Dark,light:GitHub` with default contrast settings (Ghostty's default `minimum-contrast` is 1.1).
 - Why it failed: Claude Code's TUI renders its question header in bright-white (ANSI brightWhite / color 15), which the GitHub light theme maps near `#ffffff` — invisible on the near-white background.
-- What we did instead: added `minimum-contrast = 4.5` (WCAG AA) so Ghostty bumps any foreground to meet that ratio against its background at draw time.
+- What we did instead: added `minimum-contrast = 3` so Ghostty bumps any foreground to meet a 3:1 ratio against its background at draw time. We initially tried `4.5` (WCAG AA) but it visibly washed out syntax-highlight nuance; `3` is Ghostty docs' "recommended floor to avoid difficult-to-read text" and felt like the right balance.
 - Where the fix lives: config/config, README.md.
 
 ### 2026-05-22 — Installer wiped theme directive

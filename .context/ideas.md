@@ -1,24 +1,24 @@
 # GhosttySetup Design Ideas and Decisions
 
 ## Why a watcher instead of static config
-Ghostty 1.1.0 supports `theme = dark:X,light:Y`, but four keys are NOT switched by the built-in theme system:
-- `cursor-color`
-- `cursor-text`
+Ghostty 1.2.0+ supports `theme = dark:X,light:Y`, but two keys are NOT switched by the built-in theme system:
 - `split-divider-color`
 - `unfocused-split-fill`
 
-A background watcher polls `defaults read -g AppleInterfaceStyle` and rewrites those keys in the active config so the rest of the appearance stays consistent with the system theme.
+A background watcher (macOS: `defaults read -g AppleInterfaceStyle`; Linux/GNOME: `gsettings get org.gnome.desktop.interface color-scheme`) rewrites those keys in the active config so split borders stay legible against the active theme.
+
+Cursor color used to be on this list. Since Ghostty 1.2.0, `cursor-color = cell-foreground` and `cursor-text = cell-background` make the cursor self-contrasting — see "Why cursor is now static config" below.
 
 ## Why manual restart
-`Cmd+Shift+,` reloads most of Ghostty's config but does not refresh split divider colors. A full quit + relaunch is currently required for split keys to pick up the new values. The README spells this out so users do not file bugs against the watcher.
+`Cmd+Shift+,` (macOS) / `Ctrl+Shift+,` (Linux) reloads most of Ghostty's config but does not refresh split divider colors. A full quit + relaunch is currently required for split keys to pick up the new values. The README spells this out so users do not file bugs against the watcher.
 
 ## Theme-aware key palette
-| Mode  | cursor-color | cursor-text | split-divider-color | unfocused-split-fill |
-|-------|--------------|-------------|---------------------|----------------------|
-| Dark  | #f0f0f0      | #0f0f0f     | #f0f0f0             | #f0f0f0              |
-| Light | #0f0f0f      | #f0f0f0     | #0f0f0f             | #0f0f0f              |
+| Mode  | split-divider-color | unfocused-split-fill |
+|-------|---------------------|----------------------|
+| Dark  | #f0f0f0             | #f0f0f0              |
+| Light | #0f0f0f             | #0f0f0f              |
 
-Values are intentionally near-pure black/white rather than exact black/white to keep the cursor visible against typical terminal backgrounds without looking harsh.
+Values are intentionally near-pure black/white rather than exact black/white to keep dividers visible against typical terminal backgrounds without looking harsh.
 
 ## Shell appearance helper
 `shell/appearance.zsh` resets fast-syntax-highlighting to its default theme (which uses ANSI color names that adapt to Ghostty's active palette) and sets a matching `LS_COLORS` / `LSCOLORS`. It is loaded either via zinit (`zinit light neuromechanist/GhosttySetup`) or sourced manually from `~/.zshrc`.

@@ -9,7 +9,7 @@ Lightweight Ghostty configuration with always-readable cursor, theme-aware split
 - **No paste-confirmation popup**: `clipboard-paste-protection = false`
 - **Theme-aware split dividers**: white (#f0f0f0) in dark mode, black (#0f0f0f) in light mode, updated automatically by a background watcher
 - **Theme-aware split fill**: matches divider color for a clean unfocused-pane look
-- **Split opacity**: unfocused panes dimmed to 99%
+- **Split opacity**: unfocused panes dimmed to 95%
 - **Shell appearance helpers**: fast-syntax-highlighting (zsh) and LS_COLORS / LSCOLORS adapt to the active appearance
 - **zsh plugin entry**: loadable via zinit
 

@@ -1,9 +1,9 @@
 # GhosttySetup Development Plan
 
 ## Project Overview
-**Goal:** Keep Ghostty's appearance theme-aware on macOS by watching system light/dark mode and updating the keys Ghostty does not switch automatically (cursor color/text, split divider, unfocused split fill, shell colors).
+**Goal:** Keep Ghostty's appearance theme-aware on macOS and Linux/GNOME by watching system light/dark mode and updating the split keys Ghostty does not switch automatically (split divider, unfocused split fill, shell colors). Cursor contrast is handled statically via `cell-foreground` / `cell-background` and minimum-contrast.
 **Timeline:** Maintenance mode — feature work as needed.
-**Stack:** Bash, Zsh, macOS LaunchAgent, Ghostty 1.1.0+.
+**Stack:** Bash, Zsh, macOS LaunchAgent, Linux systemd user unit, Ghostty 1.2.0+.
 
 ## Development Tasks
 <!-- Status markers: [ ] pending, [~] in progress, [x] complete -->
