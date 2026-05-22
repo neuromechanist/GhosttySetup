@@ -54,7 +54,10 @@ resolve_config_file() {
         fi
     done
 
-    # Fall back to the first candidate so set_config_value can create it.
+    # No existing config found. Fall back to the first candidate; set_config_value
+    # will create it on first write. Warn so a user running the watcher directly
+    # (without install.sh) understands a file is being synthesized.
+    echo "No Ghostty config found; will create ${candidates[0]}" >&2
     printf '%s\n' "${candidates[0]}"
 }
 
@@ -69,9 +72,17 @@ get_appearance() {
             fi
             ;;
         Linux)
-            local scheme=""
+            local scheme="" gs_err=""
             if command -v gsettings >/dev/null 2>&1; then
-                scheme="$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null || true)"
+                # Capture both stdout and stderr so transient D-Bus failures
+                # (e.g., watcher started before graphical-session is fully up)
+                # are visible in the watcher log instead of disappearing.
+                gs_err="$(gsettings get org.gnome.desktop.interface color-scheme 2>&1 >/tmp/.gsettings-out.$$ || true)"
+                scheme="$(cat /tmp/.gsettings-out.$$ 2>/dev/null || true)"
+                rm -f /tmp/.gsettings-out.$$
+                if [ -z "$scheme" ] && [ -n "$gs_err" ]; then
+                    echo "gsettings probe failed: $gs_err" >&2
+                fi
             fi
             case "$scheme" in
                 *prefer-dark*) echo "dark" ;;
@@ -131,7 +142,7 @@ update_config() {
 config_file="$(resolve_config_file)"
 echo "Starting Ghostty theme watcher on $OS"
 echo "Watching: $config_file"
-echo "Manual restart of Ghostty (Cmd+Q on macOS) is needed for split colors to apply."
+echo "Manual restart of Ghostty is needed for split colors to apply (Cmd+Q on macOS; quit and reopen on Linux)."
 
 current_appearance="$(get_appearance)"
 printf '%s\n' "$current_appearance" > "$CACHE_FILE"
