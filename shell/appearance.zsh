@@ -1,37 +1,52 @@
-# GhosttySetup: Appearance-aware shell color configuration
-# Detects system dark/light mode and sets fast-syntax-highlighting theme
-# and LS_COLORS accordingly.
+# GhosttySetup: appearance-aware shell color configuration (zsh)
 #
-# Ghostty's color schemes define ANSI color palettes with readable colors
-# on their respective backgrounds. FSH's default theme uses ANSI color
-# names, so it automatically adapts to whichever scheme is active.
+# Detects system dark/light mode and aligns fast-syntax-highlighting and
+# LS_COLORS / LSCOLORS with whichever Ghostty color scheme is active.
+#
+# Ghostty's color schemes define ANSI color palettes with readable colors on
+# their respective backgrounds; FSH's default theme uses ANSI color names, so
+# it automatically adapts to the active scheme.
 #
 # Source this file in your ~/.zshrc AFTER loading fast-syntax-highlighting:
 #   source ~/.config/ghostty/appearance.zsh
 
-# Detect macOS appearance, returns "dark" or "light"
+# Detect OS appearance: prints "dark" or "light".
 ghosttysetup_detect_appearance() {
-  if defaults read -g AppleInterfaceStyle &>/dev/null; then
-    echo "dark"
-  else
-    echo "light"
-  fi
+  case "$(uname -s)" in
+    Darwin)
+      if defaults read -g AppleInterfaceStyle &>/dev/null; then
+        echo "dark"
+      else
+        echo "light"
+      fi
+      ;;
+    Linux)
+      local scheme=""
+      if (( $+commands[gsettings] )); then
+        scheme=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)
+      fi
+      case "$scheme" in
+        *prefer-dark*) echo "dark" ;;
+        *) echo "light" ;;
+      esac
+      ;;
+    *)
+      echo "light"
+      ;;
+  esac
 }
 
-# Apply fast-syntax-highlighting theme and LS_COLORS for current appearance
 ghosttysetup_update_colors() {
   local appearance
   appearance=$(ghosttysetup_detect_appearance)
 
-  # Use FSH default theme for both modes. It uses ANSI color names (green,
-  # yellow, blue, etc.) which the terminal maps to the correct hex values
-  # based on the active Ghostty color scheme.
+  # FSH default theme uses ANSI color names that map through the active Ghostty
+  # palette in both light and dark modes.
   if (( $+functions[fast-theme] )); then
     fast-theme default &>/dev/null
   fi
 
-  # macOS ls uses LSCOLORS (BSD format)
-  # Linux ls uses LS_COLORS (GNU format via gdircolors)
+  # macOS ls uses LSCOLORS (BSD); GNU ls uses LS_COLORS via dircolors.
   if [[ "$appearance" == "light" ]]; then
     export LSCOLORS="ExGxDxDxCxDxDxBxBxExEx"
   else
@@ -40,9 +55,11 @@ ghosttysetup_update_colors() {
 
   if (( $+commands[gdircolors] )); then
     eval "$(gdircolors -b)"
+  elif (( $+commands[dircolors] )); then
+    eval "$(dircolors -b)"
   fi
 
-  # Clean up any git color env overrides from previous versions
+  # Clear git color env overrides from previous versions.
   if [[ -n "${GIT_CONFIG_COUNT:-}" ]]; then
     local -i old_count=$GIT_CONFIG_COUNT
     unset GIT_CONFIG_COUNT
@@ -53,5 +70,4 @@ ghosttysetup_update_colors() {
   fi
 }
 
-# Run on shell startup
 ghosttysetup_update_colors
