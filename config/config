@@ -14,6 +14,13 @@
 # Override either side with any bundled theme name (run `ghostty +list-themes`).
 theme = dark:GitHub Dark,light:GitHub
 
+# --- Minimum contrast (WCAG) ------------------------------------------------
+# Some TUIs (Claude Code, certain prompts) render bright-white text on themes
+# whose background is also near-white, making it unreadable. Ghostty bumps the
+# foreground at draw time so it always meets this ratio against the cell
+# background. 4.5 = WCAG AA for normal text; raise toward 7 for AAA.
+minimum-contrast = 4.5
+
 # --- Split appearance (theme-watcher managed) -------------------------------
 split-divider-color = #0f0f0f
 unfocused-split-fill = #0f0f0f

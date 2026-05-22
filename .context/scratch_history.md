@@ -25,6 +25,12 @@ Brought AGENTS.md / CLAUDE.md / .rules / .context conventions into this repo wel
 - What we did instead: added `shell-integration-features = no-cursor` so the prompt no longer overrides the block/blink cursor.
 - Where the fix lives: config/config.
 
+### 2026-05-22 — Claude Code question text invisible on GitHub light theme
+- What was tried: shipped `theme = dark:GitHub Dark,light:GitHub` with default contrast settings.
+- Why it failed: Claude Code's TUI renders its question header in bright-white (ANSI brightWhite / color 15), which the GitHub light theme maps near `#ffffff` — invisible on the near-white background.
+- What we did instead: added `minimum-contrast = 4.5` (WCAG AA) so Ghostty bumps any foreground to meet that ratio against its background at draw time.
+- Where the fix lives: config/config, README.md.
+
 ### 2026-05-22 — Installer wiped theme directive
 - What was tried: shipped a minimal `config/config` that set splits, cursor, paste, and `shell-integration-features = no-cursor`. Ran install on a Mac that already had `theme = dark:GitHub Dark,light:GitHub`, a custom keybind, and `shell-integration-features = ssh-terminfo / ssh-env`.
 - Why it failed: with no `theme = ...` in our installed file, Ghostty fell back to its default dark theme regardless of system appearance — light mode rendered with a dark background. The single `shell-integration-features = no-cursor` line also replaced the user's ssh-terminfo/ssh-env preferences.
