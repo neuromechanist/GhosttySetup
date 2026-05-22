@@ -23,7 +23,7 @@ ghosttysetup_detect_appearance() {
     Linux)
       local scheme=""
       if (( $+commands[gsettings] )); then
-        scheme=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)
+        scheme=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null || true)
       fi
       case "$scheme" in
         *prefer-dark*) echo "dark" ;;
@@ -53,10 +53,16 @@ ghosttysetup_update_colors() {
     export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
   fi
 
+  # Guard against eval'ing an empty dircolors output (silently no-ops and
+  # leaves the user with no LS_COLORS and no warning).
+  local dc_output=""
   if (( $+commands[gdircolors] )); then
-    eval "$(gdircolors -b)"
+    dc_output=$(gdircolors -b 2>/dev/null || true)
   elif (( $+commands[dircolors] )); then
-    eval "$(dircolors -b)"
+    dc_output=$(dircolors -b 2>/dev/null || true)
+  fi
+  if [[ -n "$dc_output" ]]; then
+    eval "$dc_output"
   fi
 
   # Clear git color env overrides from previous versions.

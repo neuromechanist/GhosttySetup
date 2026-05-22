@@ -19,7 +19,7 @@ ghosttysetup_detect_appearance() {
     Linux)
       local scheme=""
       if command -v gsettings >/dev/null 2>&1; then
-        scheme=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null)
+        scheme=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null || true)
       fi
       case "$scheme" in
         *prefer-dark*) echo "dark" ;;
@@ -42,10 +42,16 @@ ghosttysetup_update_colors() {
     export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
   fi
 
+  # Guard against eval'ing an empty/missing dircolors output (silently no-ops
+  # and leaves the user with no LS_COLORS and no warning).
+  local dc_output=""
   if command -v gdircolors >/dev/null 2>&1; then
-    eval "$(gdircolors -b)"
+    dc_output=$(gdircolors -b 2>/dev/null || true)
   elif command -v dircolors >/dev/null 2>&1; then
-    eval "$(dircolors -b)"
+    dc_output=$(dircolors -b 2>/dev/null || true)
+  fi
+  if [ -n "$dc_output" ]; then
+    eval "$dc_output"
   fi
 
   if [ -n "${GIT_CONFIG_COUNT:-}" ]; then
