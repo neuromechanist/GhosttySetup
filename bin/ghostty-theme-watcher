@@ -1,81 +1,153 @@
-#!/bin/bash
-# Theme watcher for Ghostty - updates cursor and split colors based on system appearance
+#!/usr/bin/env bash
+# Theme watcher for Ghostty
+#
+# Watches the OS appearance (dark/light) and rewrites the theme-aware keys in
+# the active Ghostty config so split dividers and unfocused split fill match
+# the system mode. Cursor contrast is handled statically by Ghostty 1.2.0+
+# (cursor-color = cell-foreground, cursor-text = cell-background), so this
+# watcher no longer touches cursor keys.
+#
+# Supported platforms:
+#   - macOS:        appearance via `defaults read -g AppleInterfaceStyle`
+#   - Linux/GNOME:  appearance via `gsettings get org.gnome.desktop.interface color-scheme`
 
-set -e
+set -euo pipefail
 
-CONFIG_FILE="$HOME/Library/Application Support/com.mitchellh.ghostty/config"
-CACHE_FILE="$HOME/.cache/ghostty-theme-watcher/current-theme"
+OS="$(uname -s)"
+CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/ghostty-theme-watcher/current-theme"
+POLL_INTERVAL="${GHOSTTY_THEME_POLL_INTERVAL:-2}"
 
-# Ensure cache directory exists
 mkdir -p "$(dirname "$CACHE_FILE")"
 
-# Detect current macOS appearance
+# --- Platform glue ----------------------------------------------------------
+
+# Resolve the active Ghostty config file in load order. Prefer the new
+# `config.ghostty` filename (Ghostty 1.2.3+) and fall back to legacy `config`.
+resolve_config_file() {
+    local candidates=()
+    case "$OS" in
+        Darwin)
+            # macOS-specific path is loaded after XDG and overrides it, so this
+            # is the one to edit.
+            candidates+=(
+                "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
+                "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+            )
+            ;;
+        Linux)
+            local xdg="${XDG_CONFIG_HOME:-$HOME/.config}"
+            candidates+=(
+                "$xdg/ghostty/config.ghostty"
+                "$xdg/ghostty/config"
+            )
+            ;;
+        *)
+            echo "Unsupported OS: $OS" >&2
+            return 1
+            ;;
+    esac
+
+    for path in "${candidates[@]}"; do
+        if [ -f "$path" ]; then
+            printf '%s\n' "$path"
+            return 0
+        fi
+    done
+
+    # Fall back to the first candidate so set_config_value can create it.
+    printf '%s\n' "${candidates[0]}"
+}
+
+# Detect current appearance: prints "dark" or "light".
 get_appearance() {
-    if defaults read -g AppleInterfaceStyle &>/dev/null; then
-        echo "dark"
-    else
-        echo "light"
-    fi
+    case "$OS" in
+        Darwin)
+            if defaults read -g AppleInterfaceStyle &>/dev/null; then
+                echo "dark"
+            else
+                echo "light"
+            fi
+            ;;
+        Linux)
+            local scheme=""
+            if command -v gsettings >/dev/null 2>&1; then
+                scheme="$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null || true)"
+            fi
+            case "$scheme" in
+                *prefer-dark*) echo "dark" ;;
+                *prefer-light*|*default*|"") echo "light" ;;
+                *) echo "light" ;;
+            esac
+            ;;
+        *)
+            echo "light"
+            ;;
+    esac
 }
 
-# Set a single config value, appending if not present
+# In-place sed across BSD (macOS) and GNU (Linux) without leaking temp suffixes.
+sed_inplace() {
+    case "$OS" in
+        Darwin) sed -i '' "$@" ;;
+        *)      sed -i    "$@" ;;
+    esac
+}
+
+# --- Config rewriting -------------------------------------------------------
+
 set_config_value() {
-    local key=$1
-    local value=$2
-    if grep -q "^${key} = " "$CONFIG_FILE"; then
-        sed -i '' "s|^${key} = .*|${key} = ${value}|" "$CONFIG_FILE"
+    local key="$1"
+    local value="$2"
+    local file="$3"
+
+    if [ ! -f "$file" ]; then
+        mkdir -p "$(dirname "$file")"
+        : > "$file"
+    fi
+
+    if grep -q "^${key} = " "$file"; then
+        sed_inplace "s|^${key} = .*|${key} = ${value}|" "$file"
     else
-        echo "${key} = ${value}" >> "$CONFIG_FILE"
+        printf '%s = %s\n' "$key" "$value" >> "$file"
     fi
 }
 
-# Update config file with theme-aware colors
 update_config() {
-    local appearance=$1
-    local fg_color bg_color
-
+    local appearance="$1"
+    local file="$2"
+    local color
     if [ "$appearance" = "dark" ]; then
-        fg_color="#f0f0f0"  # Light foreground on dark background
-        bg_color="#0f0f0f"
+        color="#f0f0f0"
     else
-        fg_color="#0f0f0f"  # Dark foreground on light background
-        bg_color="#f0f0f0"
+        color="#0f0f0f"
     fi
 
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo "Config file not found: $CONFIG_FILE"
-        return 1
-    fi
-
-    set_config_value "cursor-color" "$fg_color"
-    set_config_value "cursor-text" "$bg_color"
-    set_config_value "split-divider-color" "$fg_color"
-    set_config_value "unfocused-split-fill" "$fg_color"
+    set_config_value "split-divider-color"  "$color" "$file"
+    set_config_value "unfocused-split-fill" "$color" "$file"
 }
 
-# Main loop
-echo "Starting Ghostty theme watcher..."
-echo "Config will be updated automatically. Restart Ghostty (Cmd+Q, reopen) to apply changes."
+# --- Main loop --------------------------------------------------------------
 
-# Initial update
-current_appearance=$(get_appearance)
-echo "$current_appearance" > "$CACHE_FILE"
-update_config "$current_appearance"
+config_file="$(resolve_config_file)"
+echo "Starting Ghostty theme watcher on $OS"
+echo "Watching: $config_file"
+echo "Manual restart of Ghostty (Cmd+Q on macOS) is needed for split colors to apply."
+
+current_appearance="$(get_appearance)"
+printf '%s\n' "$current_appearance" > "$CACHE_FILE"
+update_config "$current_appearance" "$config_file"
 echo "Initial theme: $current_appearance"
 
-# Watch for changes
 while true; do
-    sleep 2
+    sleep "$POLL_INTERVAL"
 
-    new_appearance=$(get_appearance)
+    new_appearance="$(get_appearance)"
 
     if [ "$new_appearance" != "$current_appearance" ]; then
         echo "Appearance changed: $current_appearance -> $new_appearance"
-        current_appearance=$new_appearance
-        echo "$current_appearance" > "$CACHE_FILE"
-
-        update_config "$current_appearance"
-
-        echo "Config updated! Restart Ghostty to apply changes."
+        current_appearance="$new_appearance"
+        printf '%s\n' "$current_appearance" > "$CACHE_FILE"
+        update_config "$current_appearance" "$config_file"
+        echo "Config updated. Restart Ghostty to apply changes."
     fi
 done
