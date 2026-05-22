@@ -1,11 +1,4 @@
-# Claude Code project instructions
-CLAUDE.md
-
-# Project planning and notes
-plan.md
-ideas.md
-scratch_notes.md
-research.md
+# AGENTS.md, CLAUDE.md, .rules/, and .context/ are tracked in git by default.
 
 # macOS
 .DS_Store
