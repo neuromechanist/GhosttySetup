@@ -20,9 +20,10 @@ theme = dark:GitHub Dark,light:GitHub
 # foreground at draw time so it always meets this ratio against the cell
 # background.
 #   1.1 = Ghostty default (only prevents fully-invisible text)
+#   2   = mild boost; preserves most syntax-highlight nuance
 #   3   = Ghostty docs' "recommended to avoid difficult-to-read text"
-#   4.5 = WCAG AA, but can wash out syntax-highlight nuance
-minimum-contrast = 3
+#   4.5 = WCAG AA, but visibly washes out colors
+minimum-contrast = 2
 
 # --- Split appearance (theme-watcher managed) -------------------------------
 split-divider-color = #0f0f0f

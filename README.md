@@ -63,7 +63,7 @@ Cursor color is no longer in this table: as of Ghostty 1.2.0, `cursor-color = ce
 The installed config (`config/config` in this repo) sets:
 
 - **Theme**: `theme = dark:GitHub Dark,light:GitHub` (override with any bundled theme — run `ghostty +list-themes`)
-- **Minimum contrast**: `minimum-contrast = 3` (Ghostty docs' recommended floor). Prevents TUIs that render bright-white text on near-white themes (e.g., Claude Code question prompts on GitHub light) from being invisible. Default is 1.1 (too low); 4.5 hits WCAG AA but tends to wash out syntax-highlight nuance.
+- **Minimum contrast**: `minimum-contrast = 2` (mild boost over Ghostty's default of 1.1). Prevents TUIs that render bright-white text on near-white themes (e.g., Claude Code question prompts on GitHub light) from being invisible while preserving most syntax-highlight nuance. Raise to 3 (Ghostty docs' recommended floor) or 4.5 (WCAG AA) if text still feels hard to read.
 - **Splits**: `split-divider-color`, `unfocused-split-fill` (theme-watcher managed), `unfocused-split-opacity = 0.95`
 - **Cursor**: `cursor-color = cell-foreground`, `cursor-text = cell-background`, `cursor-style = block`, `cursor-style-blink = true`
 - **Shell integration**: `shell-integration-features = no-cursor,ssh-terminfo,ssh-env` (block/blink cursor preserved at prompt; SSH terminfo and TERM env forwarding enabled)
