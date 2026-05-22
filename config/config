@@ -1,11 +1,29 @@
-# GhosttySetup: Theme-aware appearance settings
-# Split and cursor colors are dynamically updated by the theme watcher
+# GhosttySetup: appearance and UX defaults
+#
+# split-divider-color and unfocused-split-fill are dynamically updated by the
+# theme watcher (see bin/ghostty-theme-watcher). Cursor contrast and shell
+# integration overrides are handled here as static config since Ghostty 1.2.0+
+# can derive them from the cell colors at draw time.
 
-# Split appearance (dynamically updated by theme watcher)
+# --- Split appearance (theme-watcher managed) -------------------------------
 split-divider-color = #0f0f0f
 unfocused-split-fill = #0f0f0f
 unfocused-split-opacity = 0.99
 
-# Cursor appearance (dynamically updated by theme watcher)
-cursor-color = #0f0f0f
-cursor-text = #f0f0f0
+# --- Cursor: always contrasts against whatever cell it covers ---------------
+# cell-foreground/cell-background are special values added in Ghostty 1.2.0.
+# They replace the deprecated cursor-invert-fg-bg key and make the cursor
+# readable on any theme without watcher intervention.
+cursor-color = cell-foreground
+cursor-text = cell-background
+
+# --- Typing indicator: prominent block, blinking ----------------------------
+# Shell integration normally forces a thin bar at the prompt; no-cursor turns
+# off that override so cursor-style and cursor-style-blink are honored.
+cursor-style = block
+cursor-style-blink = true
+shell-integration-features = no-cursor
+
+# --- Paste UX --------------------------------------------------------------
+# Disable the "this paste might be unsafe" confirmation prompt.
+clipboard-paste-protection = false
