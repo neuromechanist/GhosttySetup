@@ -115,10 +115,13 @@ echo "  Theme watcher: $BIN_DIR/ghostty-theme-watcher"
 
 if [ "$OS" = "Darwin" ] && [ -f "$SCRIPT_DIR/bin/create-reload-app.sh" ]; then
     echo "Creating Ghostty Reload Helper app..."
-    if bash "$SCRIPT_DIR/bin/create-reload-app.sh" 2>/dev/null; then
+    # Let stderr through so users can see why it failed (osacompile missing,
+    # permissions issue, etc.). The reload helper is optional, so we keep
+    # going on non-zero exit.
+    if bash "$SCRIPT_DIR/bin/create-reload-app.sh"; then
         echo "  Reload helper: ~/Applications/Ghostty Reload Helper.app"
     else
-        echo "  Skipped reload helper (create-reload-app.sh failed)"
+        echo "  Skipped reload helper (create-reload-app.sh failed; see stderr above)"
     fi
 fi
 
@@ -156,7 +159,10 @@ if [ "$OS" = "Darwin" ]; then
 EOF
     echo "Installed LaunchAgent: $PLIST"
 
-    if launchctl list | grep -q com.ghostty.theme-watcher; then
+    # Querying by label exits 0 only if the agent is registered, so we avoid
+    # a `launchctl list | grep` whose left side could silently fail under
+    # pipefail and leave us double-loading the LaunchAgent.
+    if launchctl list com.ghostty.theme-watcher >/dev/null 2>&1; then
         echo "Stopping existing watcher..."
         launchctl unload "$PLIST" 2>/dev/null || true
     fi
