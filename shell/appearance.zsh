@@ -66,14 +66,12 @@ ghosttysetup_update_colors() {
   fi
 
   # Clear git color env overrides from previous versions.
-  if [[ -n "${GIT_CONFIG_COUNT:-}" ]]; then
-    local -i old_count=$GIT_CONFIG_COUNT
-    unset GIT_CONFIG_COUNT
-    local -i i
-    for (( i=0; i < old_count; i++ )); do
-      unset "GIT_CONFIG_KEY_${i}" "GIT_CONFIG_VALUE_${i}"
-    done
-  fi
+  local -i old_count="${GIT_CONFIG_COUNT:-0}"
+  unset GIT_CONFIG_COUNT
+  local -i i
+  for (( i=0; i < old_count; i++ )); do
+    unset "GIT_CONFIG_KEY_${i}" "GIT_CONFIG_VALUE_${i}"
+  done
 }
 
 ghosttysetup_update_colors

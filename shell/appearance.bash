@@ -54,15 +54,13 @@ ghosttysetup_update_colors() {
     eval "$dc_output"
   fi
 
-  if [ -n "${GIT_CONFIG_COUNT:-}" ]; then
-    local old_count=$GIT_CONFIG_COUNT
-    unset GIT_CONFIG_COUNT
-    local i=0
-    while [ "$i" -lt "$old_count" ]; do
-      unset "GIT_CONFIG_KEY_${i}" "GIT_CONFIG_VALUE_${i}"
-      i=$((i + 1))
-    done
-  fi
+  local old_count="${GIT_CONFIG_COUNT:-0}"
+  unset GIT_CONFIG_COUNT
+  local i=0
+  while [ "$i" -lt "$old_count" ]; do
+    unset "GIT_CONFIG_KEY_${i}" "GIT_CONFIG_VALUE_${i}"
+    i=$((i + 1))
+  done
 }
 
 ghosttysetup_update_colors

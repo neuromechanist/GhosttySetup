@@ -86,8 +86,7 @@ get_appearance() {
             fi
             case "$scheme" in
                 *prefer-dark*) echo "dark" ;;
-                *prefer-light*|*default*|"") echo "light" ;;
-                *) echo "light" ;;
+                *)             echo "light" ;;
             esac
             ;;
         *)
