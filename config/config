@@ -4,11 +4,20 @@
 # theme watcher (see bin/ghostty-theme-watcher). Cursor contrast and shell
 # integration overrides are handled here as static config since Ghostty 1.2.0+
 # can derive them from the cell colors at draw time.
+#
+# This file is the minimum we ship. Add personal overrides (font, padding,
+# extra keybinds) below the marker at the bottom — install.sh preserves an
+# existing config to <path>.bak.<timestamp> on every install, so you can copy
+# anything custom back in from there.
+
+# --- Theme: follow OS appearance --------------------------------------------
+# Override either side with any bundled theme name (run `ghostty +list-themes`).
+theme = dark:GitHub Dark,light:GitHub
 
 # --- Split appearance (theme-watcher managed) -------------------------------
 split-divider-color = #0f0f0f
 unfocused-split-fill = #0f0f0f
-unfocused-split-opacity = 0.99
+unfocused-split-opacity = 0.95
 
 # --- Cursor: always contrasts against whatever cell it covers ---------------
 # cell-foreground/cell-background are special values added in Ghostty 1.2.0.
@@ -18,12 +27,26 @@ cursor-color = cell-foreground
 cursor-text = cell-background
 
 # --- Typing indicator: prominent block, blinking ----------------------------
-# Shell integration normally forces a thin bar at the prompt; no-cursor turns
-# off that override so cursor-style and cursor-style-blink are honored.
+# Shell integration normally forces a thin bar at the prompt; the no-cursor
+# entry below turns off that override so cursor-style/blink are honored.
 cursor-style = block
 cursor-style-blink = true
-shell-integration-features = no-cursor
+
+# --- Shell integration features ---------------------------------------------
+# no-cursor:    keep cursor-style/blink from being clobbered at the prompt.
+# ssh-terminfo: forward terminfo over SSH so xterm-ghostty resolves remotely.
+# ssh-env:      forward TERM_PROGRAM and friends across SSH.
+shell-integration-features = no-cursor,ssh-terminfo,ssh-env
+
+# --- Keybinds ---------------------------------------------------------------
+# Send a literal newline on Shift+Enter (useful for multi-line input widgets).
+keybind = shift+enter=text:\n
 
 # --- Paste UX --------------------------------------------------------------
 # Disable the "this paste might be unsafe" confirmation prompt.
 clipboard-paste-protection = false
+
+# --- Personal overrides go below this line ----------------------------------
+# Anything you add below will be preserved on future installs only if you
+# re-merge from the .bak file the installer creates. The installer always
+# overwrites this file.
