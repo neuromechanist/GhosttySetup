@@ -1,11 +1,62 @@
-# GhosttySetup: Theme-aware appearance settings
-# Split and cursor colors are dynamically updated by the theme watcher
+# GhosttySetup: appearance and UX defaults
+#
+# split-divider-color and unfocused-split-fill are dynamically updated by the
+# theme watcher (see bin/ghostty-theme-watcher). Cursor contrast and shell
+# integration overrides are handled here as static config since Ghostty 1.2.0+
+# can derive them from the cell colors at draw time.
+#
+# This file is the minimum we ship. Add personal overrides (font, padding,
+# extra keybinds) below the marker at the bottom — install.sh preserves an
+# existing config to <path>.bak.<timestamp> on every install, so you can copy
+# anything custom back in from there.
 
-# Split appearance (dynamically updated by theme watcher)
+# --- Theme: follow OS appearance --------------------------------------------
+# Override either side with any bundled theme name (run `ghostty +list-themes`).
+theme = dark:GitHub Dark,light:GitHub
+
+# --- Minimum contrast (WCAG) ------------------------------------------------
+# Some TUIs (Claude Code, certain prompts) render bright-white text on themes
+# whose background is also near-white, making it unreadable. Ghostty bumps the
+# foreground at draw time so it always meets this ratio against the cell
+# background.
+#   1.1 = Ghostty default (only prevents fully-invisible text)
+#   3   = Ghostty docs' "recommended to avoid difficult-to-read text"
+#   4.5 = WCAG AA, but can wash out syntax-highlight nuance
+minimum-contrast = 3
+
+# --- Split appearance (theme-watcher managed) -------------------------------
 split-divider-color = #0f0f0f
 unfocused-split-fill = #0f0f0f
-unfocused-split-opacity = 0.99
+unfocused-split-opacity = 0.95
 
-# Cursor appearance (dynamically updated by theme watcher)
-cursor-color = #0f0f0f
-cursor-text = #f0f0f0
+# --- Cursor: always contrasts against whatever cell it covers ---------------
+# cell-foreground/cell-background are special values added in Ghostty 1.2.0.
+# They replace the deprecated cursor-invert-fg-bg key and make the cursor
+# readable on any theme without watcher intervention.
+cursor-color = cell-foreground
+cursor-text = cell-background
+
+# --- Typing indicator: prominent block, blinking ----------------------------
+# Shell integration normally forces a thin bar at the prompt; the no-cursor
+# entry below turns off that override so cursor-style/blink are honored.
+cursor-style = block
+cursor-style-blink = true
+
+# --- Shell integration features ---------------------------------------------
+# no-cursor:    keep cursor-style/blink from being clobbered at the prompt.
+# ssh-terminfo: forward terminfo over SSH so xterm-ghostty resolves remotely.
+# ssh-env:      forward TERM_PROGRAM and friends across SSH.
+shell-integration-features = no-cursor,ssh-terminfo,ssh-env
+
+# --- Keybinds ---------------------------------------------------------------
+# Send a literal newline on Shift+Enter (useful for multi-line input widgets).
+keybind = shift+enter=text:\n
+
+# --- Paste UX --------------------------------------------------------------
+# Disable the "this paste might be unsafe" confirmation prompt.
+clipboard-paste-protection = false
+
+# --- Personal overrides go below this line ----------------------------------
+# Anything you add below will be preserved on future installs only if you
+# re-merge from the .bak file the installer creates. The installer always
+# overwrites this file.

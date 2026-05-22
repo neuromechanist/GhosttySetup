@@ -1,16 +1,28 @@
 # GhosttySetup
 
-Lightweight Ghostty configuration with automatic theme-aware cursor, split dividers, and shell colors.
+Lightweight Ghostty configuration with always-readable cursor, theme-aware split dividers, prominent typing indicator, and frictionless paste. Works on macOS and Linux (GNOME tested).
 
 ## Features
 
-- **Theme-Aware Cursor**: Cursor color and text automatically switch for visibility in both modes
-- **Theme-Aware Split Dividers**: White (#f0f0f0) in dark mode, black (#0f0f0f) in light mode
-- **Theme-Aware Split Fill**: Matches split divider color for consistent appearance
-- **Shell Appearance Colors**: Fast-syntax-highlighting (FSH) theme and LS_COLORS adapt to system theme
-- **Split Opacity**: Unfocused splits dimmed to 99% opacity
-- **Background Theme Watcher**: Automatic appearance detection and config updates
-- **Zsh Plugin**: Load via zinit for shell-level appearance integration
+- **Cursor that always contrasts**: uses Ghostty 1.2.0+ `cell-foreground` / `cell-background` so the cursor inverts against whatever cell it covers, in any theme
+- **Prominent typing indicator**: block cursor, blinking, with shell-integration's bar override disabled
+- **No paste-confirmation popup**: `clipboard-paste-protection = false`
+- **Theme-aware split dividers**: white (#f0f0f0) in dark mode, black (#0f0f0f) in light mode, updated automatically by a background watcher
+- **Theme-aware split fill**: matches divider color for a clean unfocused-pane look
+- **Split opacity**: unfocused panes dimmed to 95%
+- **Shell appearance helpers**: fast-syntax-highlighting (zsh) and LS_COLORS / LSCOLORS adapt to the active appearance
+- **zsh plugin entry**: loadable via zinit
+
+## Platform Support
+
+| Platform | Status | Appearance probe | Background service |
+|----------|--------|------------------|--------------------|
+| macOS 13+ | Supported | `defaults read -g AppleInterfaceStyle` | LaunchAgent |
+| Linux + GNOME (Ubuntu 22.04+) | Supported | `gsettings get org.gnome.desktop.interface color-scheme` | systemd user unit |
+| Linux + KDE / Hyprland / Sway | Not yet | — | — |
+| Windows | Not supported by Ghostty itself; see [Winghostty](https://winghostty.com/) | — | — |
+
+The installer detects your OS automatically and refuses to install on unsupported platforms with a pointer to the appropriate next step.
 
 ## Installation
 
@@ -21,54 +33,50 @@ cd GhosttySetup
 ```
 
 This installs:
-- Theme watcher script to `~/.local/bin/ghostty-theme-watcher`
-- Theme watcher as a LaunchAgent (runs automatically on login)
-- Shell appearance helper to `~/.config/ghostty/appearance.zsh`
 
-**Note:** Does not modify your existing Ghostty config. The watcher updates cursor and split colors in your config at:
-```
-~/Library/Application Support/com.mitchellh.ghostty/config
-```
+- Ghostty config (with backup of any existing one)
+  - macOS: `~/Library/Application Support/com.mitchellh.ghostty/config.ghostty`
+  - Linux: `~/.config/ghostty/config.ghostty`
+- Theme watcher binary at `~/.local/bin/ghostty-theme-watcher`
+- Background service that runs the watcher on login
+  - macOS: LaunchAgent (`~/Library/LaunchAgents/com.ghostty.theme-watcher.plist`)
+  - Linux: systemd user unit (`~/.config/systemd/user/ghostty-theme-watcher.service`)
+- Shell appearance helpers: `appearance.zsh` and `appearance.bash` in `~/.config/ghostty/`
 
 ## How It Works
 
-The theme watcher runs in the background and:
-1. Monitors macOS system appearance (dark/light mode)
-2. Automatically updates `cursor-color`, `cursor-text`, `split-divider-color`, and `unfocused-split-fill` in your config
-3. You manually restart Ghostty (Cmd+Q, reopen) when you want to apply the new colors
+The theme watcher polls the system appearance and rewrites two keys in your Ghostty config: `split-divider-color` and `unfocused-split-fill`. After a change, manually quit and reopen Ghostty (Cmd+Q on macOS) so the new split colors take effect.
 
-**Why manual restart?** Ghostty's config reload (Cmd+Shift+,) doesn't update split colors; only a full restart applies them.
+**Why manual restart?** Ghostty's config reload (Cmd+Shift+, on macOS, Ctrl+Shift+, on Linux) does not refresh split colors; only a full restart applies them.
 
-### Theme-Aware Colors
+### Theme-Aware Keys
 
-| Mode  | cursor-color | cursor-text | split-divider-color | unfocused-split-fill |
-|-------|-------------|-------------|---------------------|----------------------|
-| Dark  | #f0f0f0     | #0f0f0f     | #f0f0f0 (white)     | #f0f0f0 (white)      |
-| Light | #0f0f0f     | #f0f0f0     | #0f0f0f (black)     | #0f0f0f (black)      |
+| Mode  | split-divider-color | unfocused-split-fill |
+|-------|---------------------|----------------------|
+| Dark  | #f0f0f0 (near white)| #f0f0f0              |
+| Light | #0f0f0f (near black)| #0f0f0f              |
+
+Cursor color is no longer in this table: as of Ghostty 1.2.0, `cursor-color = cell-foreground` and `cursor-text = cell-background` are special values that make the cursor invert against whichever cell it covers. There is nothing for the watcher to switch.
 
 ## Configuration
 
-The main config file (`~/.config/ghostty/config`) includes:
+The installed config (`config/config` in this repo) sets:
 
-**Theme Management:**
-- Dynamic cursor and split colors updated by theme watcher
+- **Theme**: `theme = dark:GitHub Dark,light:GitHub` (override with any bundled theme — run `ghostty +list-themes`)
+- **Minimum contrast**: `minimum-contrast = 3` (Ghostty docs' recommended floor). Prevents TUIs that render bright-white text on near-white themes (e.g., Claude Code question prompts on GitHub light) from being invisible. Default is 1.1 (too low); 4.5 hits WCAG AA but tends to wash out syntax-highlight nuance.
+- **Splits**: `split-divider-color`, `unfocused-split-fill` (theme-watcher managed), `unfocused-split-opacity = 0.95`
+- **Cursor**: `cursor-color = cell-foreground`, `cursor-text = cell-background`, `cursor-style = block`, `cursor-style-blink = true`
+- **Shell integration**: `shell-integration-features = no-cursor,ssh-terminfo,ssh-env` (block/blink cursor preserved at prompt; SSH terminfo and TERM env forwarding enabled)
+- **Keybind**: `shift+enter=text:\n` (literal newline, useful for multi-line input widgets)
+- **Paste**: `clipboard-paste-protection = false`
 
-**Cursor Appearance:**
-- Cursor color: Theme-aware (light on dark, dark on light)
-- Cursor text: Inverse of cursor color for readability
+Add personal overrides (font, padding, extra keybinds) below the marker comment at the bottom of the installed config. The installer always overwrites the file but creates a `.bak.<timestamp>` next to it on every run, so you can recover prior customizations.
 
-**Split Appearance:**
-- Split dividers: Theme-aware (white in dark, black in light)
-- Unfocused split fill: Matches divider color
-- Unfocused split opacity: 99%
+## Shell Appearance
 
-## Shell Appearance (FSH and LS_COLORS)
+The shell helper sets fast-syntax-highlighting (zsh) and LS_COLORS / LSCOLORS for the current appearance. Pick the file that matches your shell.
 
-The shell appearance helper provides theme-aware colors for:
-- **fast-syntax-highlighting (FSH)**: Resets to default theme, which uses ANSI color names that adapt to Ghostty's active color scheme
-- **LS_COLORS / LSCOLORS**: Sets appropriate directory/file colors for the current appearance
-
-### Setup via zinit (recommended)
+### zsh, via zinit (recommended)
 
 Add to your `~/.zshrc` after loading fast-syntax-highlighting:
 
@@ -76,26 +84,41 @@ Add to your `~/.zshrc` after loading fast-syntax-highlighting:
 zinit light neuromechanist/GhosttySetup
 ```
 
-### Manual setup
+### zsh, manual
 
 ```zsh
 source ~/.config/ghostty/appearance.zsh
 ```
 
-## Theme Watcher Control
-
-The theme watcher runs automatically via LaunchAgent. To control it manually:
+### bash
 
 ```bash
-# Stop theme watcher
-launchctl unload ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist
+source ~/.config/ghostty/appearance.bash
+```
 
-# Start theme watcher
-launchctl load ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist
+### fish or other shells
 
-# View logs
+No first-class helper yet. The bash file is POSIX-ish; you can adapt it or open an issue.
+
+## Theme Watcher Control
+
+The watcher runs automatically via the platform's service manager. To control it manually:
+
+### macOS
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist  # stop
+launchctl load   ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist  # start
 tail -f /tmp/ghostty-theme-watcher.log
 tail -f /tmp/ghostty-theme-watcher.error.log
+```
+
+### Linux (systemd)
+
+```bash
+systemctl --user stop  ghostty-theme-watcher.service
+systemctl --user start ghostty-theme-watcher.service
+journalctl --user -u ghostty-theme-watcher.service -f
 ```
 
 ## Uninstall
@@ -104,31 +127,31 @@ tail -f /tmp/ghostty-theme-watcher.error.log
 ./uninstall.sh
 ```
 
-Removes config files, shell appearance helper, LaunchAgent, and cache directory.
+Removes the watcher, service, shell helpers, and renames the installed config to `*.uninstall-bak.<timestamp>` so you can recover it. The parent config directory is preserved.
 
-## Why Not Ghostty's Built-in Theme Switching?
+## Why This Project Exists
 
-Ghostty 1.1.0 supports built-in theme switching with `theme = dark:X,light:Y`, which handles color schemes automatically. However, `cursor-color`, `cursor-text`, `split-divider-color`, and `unfocused-split-fill` are static config values that don't respond to theme changes.
+Ghostty 1.1.0+ supports built-in theme switching with `theme = dark:X,light:Y`. That handles the standard ANSI palette but does not switch `split-divider-color` or `unfocused-split-fill`, which remain static config values. This project adds a tiny background watcher to flip those keys with the system mode, and bundles cursor and paste defaults that make day-to-day terminal use less annoying.
 
-This project adds a background watcher to make these appearance settings theme-aware, matching the rest of Ghostty's theme switching behavior.
+Cursor color used to be on that watch list too. Since Ghostty 1.2.0, the special values `cell-foreground` / `cell-background` make the cursor self-contrasting, so the watcher no longer needs to touch cursor keys.
 
 ## Migrating from WezTerm
 
-If you're coming from WezSetup (WezTerm), the key bindings are compatible. Major differences:
+If you are coming from a WezTerm config, key bindings are largely compatible. Major differences:
 
 | Feature | WezTerm | Ghostty |
 |---------|---------|---------|
-| Split dividers | config.colors.split | split-divider-color |
-| Split opacity | inactive_pane_hsb.brightness | unfocused-split-opacity |
-| Config reload | Auto on save | Cmd+Shift+, or script trigger |
-| Theme switching | window-config-reloaded event | Built-in theme system + watcher |
+| Split dividers | `config.colors.split` | `split-divider-color` |
+| Split opacity | `inactive_pane_hsb.brightness` | `unfocused-split-opacity` |
+| Config reload | auto on save | Cmd+Shift+, or full restart for split colors |
+| Theme switching | `window-config-reloaded` event | built-in `theme = dark:X,light:Y` + this watcher |
 
 ## Requirements
 
-- macOS (uses `defaults read -g AppleInterfaceStyle` for appearance detection)
-- Ghostty 1.1.0 or later
-- JetBrains Mono font (or customize in config)
-- Accessibility permissions for automatic config reload (optional, can reload manually)
+- Ghostty 1.2.0 or later (1.2.3+ recommended for the `config.ghostty` filename)
+- macOS 13+ OR Linux with GNOME 42+ (for `gsettings color-scheme`)
+- A JetBrains Mono-compatible font (or edit the font setting after install)
+- macOS only: Accessibility permission for the optional reload helper, if you want automatic config reload after appearance changes
 
 ## License
 

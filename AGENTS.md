@@ -1,13 +1,15 @@
 # GhosttySetup Instructions
 
 ## Project Context
-**Purpose:** Lightweight, theme-aware Ghostty terminal configuration for macOS. Adds dynamic appearance switching for cursor, split dividers, and shell colors that Ghostty's built-in `theme = dark:X,light:Y` does not handle. Long overdue housekeeping: bringing AGENTS.md/CLAUDE.md/.rules/.context conventions into this repo so future agent work follows the same standards as our other projects.
+**Purpose:** Lightweight, theme-aware Ghostty terminal configuration for macOS and Linux/GNOME. Adds dynamic appearance switching for split dividers and shell colors that Ghostty's built-in `theme = dark:X,light:Y` does not handle, plus cursor contrast (`cell-foreground`/`cell-background`), paste UX (`clipboard-paste-protection`), and TUI readability (`minimum-contrast`).
 
 **Tech Stack:**
-- Bash (installer, uninstaller, theme watcher, reload helper)
-- Zsh (shell appearance helper, zinit plugin entry)
-- macOS LaunchAgent (`launchd` plist for background watcher)
-- Ghostty 1.1.0+ config
+- Bash (installer, uninstaller, theme watcher, reload helper, bash appearance helper)
+- Zsh (zsh appearance helper, zinit plugin entry)
+- macOS LaunchAgent (`launchd` plist for background watcher on Darwin)
+- Linux systemd user unit (background watcher on Linux/GNOME)
+- macOS `defaults` and Linux `gsettings` for appearance probing
+- Ghostty 1.2.0+ config
 
 **Architecture:**
 - `install.sh` / `uninstall.sh` — idempotent installers that drop files into `~/.config/ghostty`, `~/.local/bin`, and `~/Library/LaunchAgents`
@@ -64,12 +66,12 @@ launchctl load   ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist
 ## [CRITICAL] Core Principles
 
 ### Idempotent Installs
-- `install.sh` must be safe to run repeatedly without duplicating launch agents, helper apps, or shell sources.
-- Always unload an existing LaunchAgent before reloading it.
-- Never overwrite a user's existing `~/.config/ghostty/config` without an explicit prompt or backup; today's behavior unconditionally copies the template — flag any change to that.
+- `install.sh` must be safe to run repeatedly without duplicating LaunchAgents (macOS), systemd user units (Linux), helper apps, or shell sources.
+- Always unload an existing LaunchAgent / disable an existing systemd unit before reloading.
+- Always back up an existing Ghostty config (`<path>.bak.<timestamp>`) before overwriting.
 
 ### Test Reality Only (no mocks)
-- This is a macOS-only shell project. There is no unit-test harness; tests are manual: install, switch appearance, observe.
+- This is a shell project. There is no unit-test harness; tests are manual: install, switch appearance, observe — on the real OS (macOS or Linux/GNOME).
 - Capture each manual verification step in the PR body and in `.context/scratch_history.md` when something breaks.
 **Details:** `.rules/testing.md` (adapt the "no mocks" stance to shell — verify on the real OS).
 
@@ -93,7 +95,8 @@ launchctl load   ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist
 - Never commit secrets, .env files, or credentials.
 - Never add emojis or AI attribution to commits, PRs, or scripts.
 - Never add a TODO without a linked issue.
-- Never assume Linux/Windows — this project is macOS-only (uses `defaults`, `launchctl`, `osascript`).
+- Never assume a new platform works without testing — supported targets are macOS (`defaults`, `launchctl`, `osascript`) and Linux/GNOME (`gsettings`, `systemctl`). Windows is explicitly unsupported (no official Ghostty build; installer points users to Winghostty).
+- Never add a new platform branch without an issue and a concrete test plan.
 
 ## [REFERENCE] Rules Directory
 
@@ -110,7 +113,7 @@ launchctl load   ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist
 
 ## Context Files
 - `.context/plan.md` — Current tasks and phases
-- `.context/research.md` — Ghostty config behavior, macOS appearance APIs
+- `.context/research.md` — Ghostty config behavior, macOS / Linux appearance APIs
 - `.context/ideas.md` — Design decisions (theme-aware keys, watcher vs static config, opacity)
 - `.context/scratch_history.md` — Failed attempts and lessons
 
@@ -122,22 +125,26 @@ launchctl load   ~/Library/LaunchAgents/com.ghostty.theme-watcher.plist
 # Uninstall
 ./uninstall.sh
 
-# Watcher logs
+# Watcher logs (macOS)
 tail -f /tmp/ghostty-theme-watcher.log
 tail -f /tmp/ghostty-theme-watcher.error.log
 
-# Force a manual appearance probe
-defaults read -g AppleInterfaceStyle 2>/dev/null || echo "Light"
+# Watcher logs (Linux/systemd)
+journalctl --user -u ghostty-theme-watcher.service -f
 
-# Lint shell scripts (install when needed)
-shellcheck install.sh uninstall.sh bin/ghostty-theme-watcher bin/create-reload-app.sh
+# Force a manual appearance probe
+defaults read -g AppleInterfaceStyle 2>/dev/null || echo "Light"   # macOS
+gsettings get org.gnome.desktop.interface color-scheme              # Linux/GNOME
+
+# Lint shell scripts
+shellcheck install.sh uninstall.sh bin/ghostty-theme-watcher shell/appearance.bash bin/create-reload-app.sh
 ```
 
 ## Project-Specific Guidelines
-- Maintain the theme-aware key table in `README.md` (cursor-color, cursor-text, split-divider-color, unfocused-split-fill). Any new key needs a row and a watcher update in lockstep.
-- `shell/appearance.zsh` should remain safe to source from non-Ghostty terminals; guard on `$GHOSTTY_RESOURCES_DIR` or similar when adding Ghostty-only logic.
-- Prefer `set -euo pipefail` for new scripts; existing scripts use `set -e` — upgrade opportunistically when touching them.
-- LaunchAgent label is `com.ghostty.theme-watcher`; keep it stable so existing installs upgrade cleanly.
+- Maintain the theme-aware key table in `README.md` (`split-divider-color`, `unfocused-split-fill`). Any new key needs a row and a watcher update in lockstep. Cursor keys are static (`cell-foreground`/`cell-background`) and not watcher-managed.
+- `shell/appearance.zsh` and `shell/appearance.bash` should remain safe to source from non-Ghostty terminals.
+- All maintained scripts use `set -euo pipefail`; keep it that way.
+- LaunchAgent label is `com.ghostty.theme-watcher` and systemd unit is `ghostty-theme-watcher.service`; keep both stable so existing installs upgrade cleanly.
 
 ---
 Remember: this is a small but user-facing tool. Breakage shows up immediately on the contributor's own desktop, so favor visible logging and idempotent operations over cleverness.
